@@ -1,0 +1,81 @@
+{
+    "name": "eznix86/blade-islands",
+    "description": "Blade islands for Laravel.",
+    "keywords": [
+        "blade",
+        "laravel",
+        "islands",
+        "react",
+        "vue",
+        "svelte"
+    ],
+    "homepage": "https://github.com/eznix86/laravel-blade-islands",
+    "type": "library",
+    "license": "MIT",
+    "version": "0.1.0",
+    "authors": [
+        {
+            "name": "Bruno Bernard",
+            "email": "contact.brunobernard@gmail.com",
+            "homepage": "https://github.com/eznix86"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^13.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Eznix86\\BladeIslands\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Eznix86\\BladeIslands\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "driftingly/rector-laravel": "^2.1.9",
+        "larastan/larastan": "^3.9",
+        "laravel/pint": "^1.27",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.1",
+        "phpstan/phpstan": "^2.1",
+        "rector/rector": "^2.3.7",
+        "mrpunyapal/rector-pest": "^0.2.0"
+    },
+    "scripts": {
+        "test": "./vendor/bin/pest",
+        "test:types": "vendor/bin/phpstan analyse --memory-limit=1G",
+        "refactor": "vendor/bin/rector process",
+        "test:refactor": "vendor/bin/rector process --dry-run",
+        "lint": [
+            "@test:refactor",
+            "vendor/bin/pint --test --parallel"
+        ],
+        "lint:fix": [
+            "@refactor",
+            "vendor/bin/pint --parallel"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Eznix86\\BladeIslands\\BladeIslandsServiceProvider"
+            ]
+        }
+    },
+    "support": {
+        "issues": "https://github.com/eznix86/laravel-blade-islands/issues",
+        "source": "https://github.com/eznix86/laravel-blade-islands"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
