@@ -9,6 +9,5 @@ parameters:
     paths:
         - src/
         - tests/
-        - config/
 
     level: 5
