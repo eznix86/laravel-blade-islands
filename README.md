@@ -23,6 +23,7 @@ This package provides the Blade directives and HTML output. The browser runtime 
 - [How It Works](#how-it-works)
 - [Vite Setup](#vite-setup)
 - [Component Resolution](#component-resolution)
+- [Custom Root](#custom-root)
 - [Preserve Mounted Islands](#preserve-mounted-islands)
 - [Options](#options)
 - [Protocol](#protocol)
@@ -237,6 +238,33 @@ resolves to:
 
 ```text
 resources/js/islands/Billing/Invoices/Table.vue
+```
+
+## Custom Root
+
+This package does not resolve filesystem paths itself, but it works with custom roots configured in the browser runtime.
+
+For example, if your frontend entry uses:
+
+```js
+import islands from 'blade-islands/vue'
+
+islands({
+  root: '/resources/js/widgets',
+  components: import.meta.glob('/resources/js/widgets/**/*.vue'),
+})
+```
+
+Then this Blade call:
+
+```php
+@vue('Dashboard', [...])
+```
+
+mounts:
+
+```text
+resources/js/widgets/Dashboard.vue
 ```
 
 ## Preserve Mounted Islands
