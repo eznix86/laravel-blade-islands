@@ -1,78 +1,206 @@
 # 🏝️ Blade Islands For Laravel
 
+<p align="center">
+  <img src="art/header.png" alt="Blade Islands for Laravel" width="1024">
+</p>
+
+[![Latest Stable Version](https://img.shields.io/packagist/v/eznix86/blade-islands)](https://packagist.org/packages/eznix86/blade-islands)
+[![Total Downloads](https://img.shields.io/packagist/dt/eznix86/blade-islands)](https://packagist.org/packages/eznix86/blade-islands)
+[![License](https://img.shields.io/packagist/l/eznix86/blade-islands)](LICENSE)
+
 Server-side Blade directives for React, Vue, and Svelte islands in Laravel.
 
-This package is the Laravel half of Blade Islands. It renders the HTML contract in Blade. The client-side runtime lives in the separate npm package [`blade-islands`](https://github.com/eznix86/blade-islands).
+Blade Islands lets you render small React, Vue, or Svelte components inside Laravel Blade views without turning your application into a full single-page app.
 
-## What Is This?
+This package provides the Blade directives and HTML output. The browser runtime lives in the npm package [`blade-islands`](https://github.com/eznix86/blade-islands).
 
-This mounts JS framework components on top of Laravel Blade templates by rendering lightweight island placeholders.
+## Contents
 
-It provides Blade directives for:
+- [Why Blade Islands?](#why-blade-islands)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Available Directives](#available-directives)
+- [How It Works](#how-it-works)
+- [Vite Setup](#vite-setup)
+- [Component Resolution](#component-resolution)
+- [Preserve Mounted Islands](#preserve-mounted-islands)
+- [Options](#options)
+- [Protocol](#protocol)
+- [Requirements](#requirements)
+- [Companion Package](#companion-package)
+- [Blade Islands vs X](#blade-islands-vs-x)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
 
-- `@react`
-- `@vue`
-- `@svelte`
+## Why Blade Islands?
 
-Those placeholders contain the metadata the frontend runtime needs to mount the matching component on the client.
+Blade Islands works well when your application is mostly server-rendered but still needs interactive UI in places such as:
 
-## Quick Start
+- search inputs
+- dashboards
+- maps
+- counters
+- filters
+- dialogs
 
-Install the package:
+Instead of building entire pages in a frontend framework, you can keep Blade as your primary rendering layer and hydrate only the parts of the page that need JavaScript.
+
+## Installation
+
+Install the Laravel package:
 
 ```bash
 composer require eznix86/blade-islands
 ```
 
-Use a directive in Blade:
+Then install the browser runtime, your frontend framework, and the matching Vite plugin.
 
-```php
-@react('Dashboard', ['user' => ['name' => 'Bruno']])
+### React
+
+```bash
+npm install blade-islands react react-dom @vitejs/plugin-react
 ```
 
-Pair it with the JS runtime in `resources/js/app.js`:
+### Vue
+
+```bash
+npm install blade-islands vue @vitejs/plugin-vue
+```
+
+### Svelte
+
+```bash
+npm install blade-islands svelte @sveltejs/vite-plugin-svelte
+```
+
+## Quick Start
+
+Render an island from Blade:
+
+```php
+@react('ProfileCard', ['user' => $user])
+```
+
+Then boot the matching runtime in `resources/js/app.js`:
 
 ```js
-npm install blade-islands react react-dom
-
 import islands from 'blade-islands/react'
 
 islands()
 ```
 
-If you use React islands in development, add the React refresh preamble to your Blade layout:
+This mounts `resources/js/islands/ProfileCard.jsx`.
+
+## Available Directives
+
+Blade Islands provides three directives:
 
 ```php
-<head>
-    @viteReactRefresh
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
+@react('Dashboard', ['user' => $user])
+@vue('Support/TicketList', ['tickets' => $tickets])
+@svelte('Cart/Drawer', ['count' => $count])
 ```
 
-## Extensive Usage
+## How It Works
 
-### Directives
+Blade Islands has two parts:
+
+- this package renders island placeholders from Blade
+- the npm runtime scans the DOM and mounts the matching frontend component
+
+For example:
 
 ```php
-@react('Dashboard', ['user' => ['name' => 'Bruno']])
-@vue('Support/Map', ['lat' => 48.85, 'lng' => 2.35])
-@svelte('Cart/Drawer', ['count' => 3])
+@react('Account/UsageChart', ['stats' => $stats])
 ```
 
-### Blade Layout Setup
+renders the metadata needed to mount:
 
-Use the normal Laravel Vite tags in your layout:
+```text
+resources/js/islands/Account/UsageChart.jsx
+```
+
+## Vite Setup
+
+Register the plugin for the framework you use.
+
+### React
+
+```js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+})
+```
+
+If your Laravel layout loads a React entrypoint in development, include:
 
 ```php
-<head>
-    @viteReactRefresh
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
+@viteReactRefresh
 ```
 
-`@viteReactRefresh` is required for React islands in development. Vue and Svelte do not need an extra Blade directive, but their Vite plugins still need to be installed on the JS side.
+### Vue
 
-### API
+```js
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+})
+```
+
+### Svelte
+
+```js
+import { defineConfig } from 'vite'
+import { svelte } from '@sveltejs/vite-plugin-svelte'
+
+export default defineConfig({
+  plugins: [svelte()],
+})
+```
+
+## Component Resolution
+
+By default, the runtime looks for components in `resources/js/islands`.
+
+Nested folders work automatically. For example:
+
+```php
+@vue('Billing/Invoices/Table', [...])
+```
+
+resolves to:
+
+```text
+resources/js/islands/Billing/Invoices/Table.vue
+```
+
+## Preserve Mounted Islands
+
+Use `preserve: true` when the same DOM is processed more than once and you want Blade Islands to keep an existing island mounted instead of mounting it again.
+
+This is useful when the page or a DOM fragment is recalculated and your frontend boot logic runs again.
+
+```php
+@react('Dashboard/RevenueChart', ['stats' => $stats], preserve: true)
+@vue('Dashboard/RevenueChart', ['stats' => $stats], preserve: true)
+@svelte('Dashboard/RevenueChart', ['stats' => $stats], preserve: true)
+```
+
+If you reuse a preserved component in a loop, pass a unique `key` so each island keeps its own identity:
+
+```php
+@foreach ($products as $product)
+    @react('Product/Card', ['product' => $product], preserve: true, key: "product-{$product->id}")
+@endforeach
+```
+
+## Options
 
 Each directive accepts up to four arguments:
 
@@ -80,102 +208,25 @@ Each directive accepts up to four arguments:
 @react($component, $props = [], $preserve = false, $key = null)
 ```
 
-- `$component` - component name relative to the JS component root
-- `$props` - props encoded into `data-props`
-- `$preserve` - marks the island as preserved so the runtime can skip remounting the same DOM node
-- `$key` - optional stable key for repeated preserved islands
-
-### Named Arguments
+- `$component` - component name relative to the JavaScript component root
+- `$props` - props encoded into the rendered HTML
+- `$preserve` - keeps an existing island mounted when the same DOM is processed again
+- `$key` - unique key for distinguishing repeated preserved islands
 
 Named arguments are supported:
 
 ```php
 @react(
     component: 'Dashboard',
-    props: ['user' => ['name' => 'Bruno']],
+    props: ['user' => $user],
     preserve: true,
     key: 'dashboard-main',
 )
 ```
 
-### Nested Components
+## Protocol
 
-Nested folders are supported:
-
-```php
-@vue('Support/Map', ['lat' => 48.85, 'lng' => 2.35])
-```
-
-which matches:
-
-```text
-resources/js/islands/Support/Map.vue
-```
-
-### Component Preservation
-
-```php
-@react('Support/Map', [...], preserve: true)
-@vue('Support/Map', [...], preserve: true)
-@svelte('Support/Map', [...], preserve: true)
-```
-
-This skips remounting that same DOM node on later boot passes.
-
-This is useful to prevent re-renders of components.
-
-Use preserve for singleton-style islands:
-
-```php
-@react('Dashboard', ['user' => $user], true)
-```
-
-Use an explicit key for repeated preserved islands:
-
-```php
-@react('Product/Card', ['product' => $product], true, "product-{$product->id}")
-```
-
-If you omit the key, the package falls back to a stable key built from the island type and component name, like `react:dashboard`.
-
-### Custom Root
-
-This package does not resolve filesystem paths itself, but it works with custom roots configured in the JS runtime.
-
-For example, if the JS side uses:
-
-```js
-npm install blade-islands vue
-
-import islands from 'blade-islands/vue'
-
-islands({
-  root: '/resources/js/widgets',
-  components: import.meta.glob('/resources/js/widgets/**/*.vue'),
-})
-```
-
-then this Blade call:
-
-```php
-@vue('Dashboard', [...])
-```
-
-resolves to:
-
-```text
-resources/js/widgets/Dashboard.vue
-```
-
-### Vite Plugins
-
-The JS runtime repo documents the required Vite plugins:
-
-- `@vitejs/plugin-react` for React
-- `@vitejs/plugin-vue` for Vue
-- `@sveltejs/vite-plugin-svelte` for Svelte
-
-### Rendered Output
+Blade Islands renders lightweight placeholders like:
 
 ```html
 <div
@@ -186,6 +237,38 @@ The JS runtime repo documents the required Vite plugins:
   data-key="react:dashboard"
 ></div>
 ```
+
+## Requirements
+
+- PHP 8.3+
+- Laravel 13+
+
+## Companion Package
+
+Use this package with the separate browser runtime:
+
+- npm package: `blade-islands`
+- repository: `blade-islands`
+
+## Blade Islands vs X
+
+### Inertia.js
+
+Inertia is a better fit when your application wants React, Vue, or Svelte to render full pages with a JavaScript-first page architecture.
+
+Blade Islands is a better fit when your application is already Blade-first and you want to keep server-rendered pages while hydrating only selected components.
+
+### MingleJS
+
+MingleJS is often used in Laravel applications that embed React or Vue components, especially in Livewire-heavy codebases.
+
+Blade Islands is more naturally suited to Blade-first applications that want progressive enhancement with minimal architectural change. It does not depend on Livewire, and it may also be used alongside Livewire when that fits your application.
+
+### Laravel UI
+
+Laravel UI is a legacy scaffolding package for frontend presets and authentication views.
+
+Blade Islands solves a different problem: adding targeted client-side interactivity to server-rendered Blade pages.
 
 ## Testing
 
@@ -198,25 +281,11 @@ composer test
 
 Contributions are welcome.
 
-Recommended workflow:
-
 1. Fork the repository
 2. Create a focused branch
 3. Add or update tests
 4. Run `composer test`
 5. Open a pull request with a clear summary
-
-## Companion Package
-
-This package only renders Blade output. Use it with the separate runtime package:
-
-- npm package: `blade-islands`
-- repository: `blade-islands`
-
-## Requirements
-
-- PHP 8.3+
-- Laravel 13+
 
 ## License
 
