@@ -76,13 +76,11 @@ npm install blade-islands svelte @sveltejs/vite-plugin-svelte
 
 ## Quick Start
 
-Render an island from Blade:
+Add the runtime to `resources/js/app.js`, load that entry from your Blade layout, and render an island from Blade.
 
-```php
-@react('ProfileCard', ['user' => $user])
-```
+### React
 
-Then boot the matching runtime in `resources/js/app.js`:
+`resources/js/app.js`
 
 ```js
 import islands from 'blade-islands/react'
@@ -90,7 +88,68 @@ import islands from 'blade-islands/react'
 islands()
 ```
 
+Blade layout:
+
+```php
+<head>
+    @viteReactRefresh
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+```
+
+```php
+@react('ProfileCard', ['user' => $user])
+```
+
 This mounts `resources/js/islands/ProfileCard.jsx`.
+
+### Vue
+
+`resources/js/app.js`
+
+```js
+import islands from 'blade-islands/vue'
+
+islands()
+```
+
+Blade layout:
+
+```php
+<head>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+```
+
+```php
+@vue('ProfileCard', ['user' => $user])
+```
+
+This mounts `resources/js/islands/ProfileCard.vue`.
+
+### Svelte
+
+`resources/js/app.js`
+
+```js
+import islands from 'blade-islands/svelte'
+
+islands()
+```
+
+Blade layout:
+
+```php
+<head>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+```
+
+```php
+@svelte('ProfileCard', ['user' => $user])
+```
+
+This mounts `resources/js/islands/ProfileCard.svelte`.
 
 ## Available Directives
 
