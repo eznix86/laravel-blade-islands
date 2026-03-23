@@ -1,4 +1,4 @@
-# Blade Islands For Laravel
+# 🏝️ Blade Islands For Laravel
 
 Server-side Blade directives for React, Vue, and Svelte islands in Laravel.
 
